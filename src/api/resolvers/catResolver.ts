@@ -9,10 +9,8 @@
 // 2.2. updateCat
 // 2.3. deleteCat
 
-import rectangleBounds from '../../utils/rectangleBounds';
 import catModel from '../models/catModel';
 import {Cat} from '../../interfaces/Cat';
-import {locationInput} from '../../interfaces/Location';
 import userModel from '../models/userModel';
 
 export default {
@@ -34,7 +32,6 @@ export default {
     createCat: async (_: undefined, args: Cat) => {
       const newCat = new catModel(args);
 
-      // Get owner
       const owner = await userModel.findById(args.owner);
       if (!owner) {
         throw new Error('Owner not found');
@@ -43,7 +40,7 @@ export default {
       await newCat.save();
       return newCat;
     },
-    updateCat: async (_: undefined, args: Cat) => {
+    updateCat: async (_: undefined, args: Cat): Promise<Cat> => {
       const updatedCat = await catModel.findByIdAndUpdate(
         args.id,
         {...args},
@@ -51,10 +48,17 @@ export default {
           new: true,
         }
       );
+      if (!updatedCat) {
+        throw new Error('No cat found with id' + args.id);
+      }
       return updatedCat;
     },
-    deleteCat: async (_: undefined, args: Cat) => {
-      return catModel.findOneAndDelete({_id: args.id});
+    deleteCat: async (_: undefined, args: {id: string}): Promise<Cat> => {
+      const catToDelete = await catModel.findById(args.id);
+      if (!catToDelete) {
+        throw new Error('No cat found with this id' + args.id);
+      }
+      return catToDelete;
     },
   },
 };
